@@ -28,7 +28,7 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+        // await client.connect();
 
         const zeusCollection = client.db("zeusDB").collection("users")
         const equipmentCollection = client.db("zeusDB").collection("equipments")
@@ -85,10 +85,10 @@ async function run() {
         })
         app.get(`/category/:name`, async (req, res) => {
             const name = req.params.name
-            console.log("name",name);
-            
+            console.log("name", name);
+
             const query = { category: name }
-            const category =  equipmentCollection.find(query)
+            const category = equipmentCollection.find(query)
             result = await category.toArray()
 
             res.send(result)
@@ -96,23 +96,45 @@ async function run() {
 
         })
         // my equipments
-        app.get(`/myEquipment/:mail`, async(req, res) => {
+        app.get(`/myEquipment/:mail`, async (req, res) => {
             const mail = req.params.mail;
-            const query = {email: mail};
+            const query = { email: mail };
             const cursor = equipmentCollection.find(query);
             const result = await cursor.toArray();
             res.send(result)
         })
 
+        app.patch(`/myEquipment`, async (req, res) => {
+            const doc = req.body;
+            const filter = { _id: new ObjectId(doc._id) }
+            const updateDoc = {
+                $set: {
+                    image : doc.image,
+                    name : doc.name,
+                    category : doc.category,
+                    description : doc.description,
+                    price : doc.price,
+                    rating : doc.rating,
+                    customization : doc.customization,
+                    delivery : doc.delivery,
+                    stock : doc.stock
+
+                }
+            }
+            const result = await equipmentCollection.updateOne(filter,updateDoc)
+            res.send(result)
+        })
+
         app.delete(`/myEquipment/:id`, async (req, res) => {
             const id = req.params.id
-            const query = {_id : new ObjectId(id)}
-            const result =  await equipmentCollection.deleteOne(query)
+            const query = { _id: new ObjectId(id) }
+            const result = await equipmentCollection.deleteOne(query)
+            res.send(result)
         })
 
 
         // Send a ping to confirm a successful connection
-        await client.db("admin").command({ ping: 1 });
+        // await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
